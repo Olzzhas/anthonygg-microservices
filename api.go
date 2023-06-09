@@ -30,7 +30,7 @@ func (s *JSONAPIServer) Run() {
 
 func makeHTTPHandlerFunc(apiFn APIFunc) http.HandlerFunc {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "requestID", rand.Intn(100000))
+	ctx = context.WithValue(ctx, "requestID", rand.Intn(100000000))
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := apiFn(ctx, w, r); err != nil {
