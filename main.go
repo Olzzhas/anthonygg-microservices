@@ -1,30 +1,42 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
+	"github.com/olzzhas/anthonygg-microservices/client"
+	"github.com/olzzhas/anthonygg-microservices/proto"
+	"log"
+	"time"
 )
 
 func main() {
-	//client := client.New("http://localhost:3000")
-	//
-	//price, err := client.FetchPrice(context.Background(), "GsG")
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//fmt.Printf("%+v\n", price)
-	//
-	//return
-
-	// https://www.youtube.com/watch?v=367qYRy39zw&list=PL0xRBLFXXsP5cru52B5GAQmIrTTAL8A66&index=5
-	// 1:02:27
-
-	listenAddr := flag.String("listenaddr", ":3000", "listen address the service is running")
+	var (
+		jsonAddr = flag.String("json", ":3000", "listen address of the json transport")
+		grpcAddr = flag.String("grpc", ":4000", "listen address of the grpc transport")
+		svc      = loggingService{priceService{}}
+		ctx      = context.Background()
+	)
 	flag.Parse()
 
-	svc := NewLoggingService(NewMetricService(&priceFetcher{}))
+	grpcClient, err := client.NewGRPCClient(":4000")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	server := NewJSONAPIServer(*listenAddr, svc)
+	go func() {
+		time.Sleep(3 * time.Second)
+		resp, err := grpcClient.FetchPrice(ctx, &proto.PriceRequest{Ticker: "BTC"})
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	server.Run()
+		fmt.Printf("%+v\n", resp)
+	}()
+
+	go makeGRPCServerAndRun(*grpcAddr, svc)
+
+	jsonServer := NewJSONAPIServer(*jsonAddr, svc)
+	jsonServer.Run()
+
 }

@@ -16,3 +16,7 @@ CMD [ "/pricefetcher"]
 #COPY ./ ./
 #RUN go build -o pricefetcher .
 #CMD ["./main"]
+
+
+#docker build -t fetcher:1 .
+#docker run -p 3000:3000 -d fetcher:1
